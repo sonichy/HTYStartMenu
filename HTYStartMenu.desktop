@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=开始菜单
+Comment=Edit text files
+Exec=/media/sonichy/job/HY/Linux/Qt/HTYStartMenu/HTYStartMenu
+Icon=/media/sonichy/job/HY/Linux/Qt/HTYStartMenu/icon.png
+Path=/media/sonichy/job/HY/Linux/Qt/HTYStartMenu
+Terminal=false
+Type=Application
+StartupNotify=true
+MimeType=text/plain;
+Categories=GNOME;GTK;Utility;TextEditor;
+Comment[zh_CN.UTF-8]=
