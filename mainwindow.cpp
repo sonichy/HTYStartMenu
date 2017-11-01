@@ -192,8 +192,8 @@ void MainWindow::run(QModelIndex index)
 void MainWindow::highlight(QModelIndex index)
 {
     //qDebug() << index;
-    //qDebug() << "setData:Icon" << model->setData(index, QIcon("icon.png"), Qt::DecorationRole);
-    //qDebug() << "setData:Text" << model->setData(index, QVariant("深度"), Qt::DisplayRole);
+    model->setData(index, QIcon(":/icon.png"), Qt::DecorationRole);
+    model->setData(index, QString("深度"), Qt::DisplayRole);
 }
 
 void MainWindow::about()
@@ -212,6 +212,10 @@ void MainWindow::itemClick(QListWidgetItem* item)
         ui->listView->setModel(model);
         ui->listView->setRootIndex(model->index("/usr/share/applications"));
         break;
+    case 9:{
+        QProcess *process = new QProcess;
+        process->start("dbus-send --print-reply --dest=com.deepin.dde.ControlCenter /com/deepin/dde/ControlCenter com.deepin.dde.ControlCenter.ShowModule \"string:systeminfo\"");
+        break;}
     case 10:
         ui->listView->setModel(SIM);
         break;
