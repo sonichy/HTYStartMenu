@@ -6,10 +6,10 @@
 #include <QDebug>
 #include <QMenu>
 #include <QMessageBox>
-#include <QStandardItem>
 #include <QProcess>
-QStandardItemModel *SIM;
-QString path;
+#include <QMimeDatabase>
+#include <QDateTime>
+#include <QFileIconProvider>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -52,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->listView,SIGNAL(clicked(QModelIndex)),this,SLOT(run(QModelIndex)));
     connect(ui->listView,SIGNAL(entered(QModelIndex)),this,SLOT(highlight(QModelIndex)));
     //connect(model,SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>),model,SLOT());
+    ui->listView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->listView, SIGNAL(customContextMenuRequested(QPoint)),this, SLOT(viewContextMenu(QPoint)));
 
     QMenu *shutmenu=new QMenu;
     QAction *logout=new QAction("注销",this);
@@ -74,23 +76,23 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(lock,SIGNAL(triggered()),this,SLOT(lock()));
     connect(about,SIGNAL(triggered()),this,SLOT(about()));
 
-    path="/media/sonichy/job/HY/Linux/Qt/";
-    QStandardItem *SI1,*SI2,*SI3,*SI4,*SI5,*SI6,*SI7;
-    SI1=new QStandardItem(QIcon(path+"HTYEdit/icon.png"),"文本编辑器");
-    SI2=new QStandardItem(QIcon(path+"HTYMP/icon.png"),"媒体播放器");
-    SI3=new QStandardItem(QIcon(path+"HTYScreenshot/icon.png"),"截图");
-    SI4=new QStandardItem(QIcon(path+"HTYPaint/icon.png"),"画图");
-    SI5=new QStandardItem(QIcon(path+"HTYGIFPlayer/icon.png"),"GIF播放器");
-    SI6=new QStandardItem(QIcon(path+"HTYDown/icon.png"),"下载");
-    SI7=new QStandardItem(QIcon(path+"HTYMPAV/icon.png"),"媒体播放器QtAV");
-    SIM=new QStandardItemModel(this);
-    SIM->appendRow(SI1);
-    SIM->appendRow(SI2);
-    SIM->appendRow(SI3);
-    SIM->appendRow(SI4);
-    SIM->appendRow(SI5);
-    SIM->appendRow(SI6);
-    SIM->appendRow(SI7);
+//    path = "/media/sonichy/job/HY/Linux/Qt/";
+//    QStandardItem *SI1,*SI2,*SI3,*SI4,*SI5,*SI6,*SI7;
+//    SI1 = new QStandardItem(QIcon(path+"HTYEdit/icon.png"),"文本编辑器");
+//    SI2 = new QStandardItem(QIcon(path+"HTYMP/icon.png"),"媒体播放器");
+//    SI3 = new QStandardItem(QIcon(path+"HTYScreenshot/icon.png"),"截图");
+//    SI4 = new QStandardItem(QIcon(path+"HTYPaint/icon.png"),"画图");
+//    SI5 = new QStandardItem(QIcon(path+"HTYGIFPlayer/icon.png"),"GIF播放器");
+//    SI6 = new QStandardItem(QIcon(path+"HTYDown/icon.png"),"下载");
+//    SI7 = new QStandardItem(QIcon(path+"HTYMPAV/icon.png"),"媒体播放器QtAV");
+//    SIM = new QStandardItemModel(this);
+//    SIM->appendRow(SI1);
+//    SIM->appendRow(SI2);
+//    SIM->appendRow(SI3);
+//    SIM->appendRow(SI4);
+//    SIM->appendRow(SI5);
+//    SIM->appendRow(SI6);
+//    SIM->appendRow(SI7);
 }
 
 MainWindow::~MainWindow()
@@ -145,48 +147,30 @@ void MainWindow::lock()
 void MainWindow::namefilter(QString text)
 {
     QStringList filter;
-    filter << "*"+text+"*";
+    filter << "*" + text + "*";
     model->setNameFilters(filter);
 }
 
 void MainWindow::run(QModelIndex index)
 {
     showMinimized();
-    QString filename=index.data().toString();
-    //filename.truncate(filename.lastIndexOf("."));
-    //system(filename.toLatin1().data());
-    qDebug() << filename;
-    QString cmd;
-    QString str = "文本编辑器,媒体播放器,截图,画图,GIF播放器,下载,媒体播放器QtAV";
-    QStringList name = str.split(",");
-    switch(name.indexOf(filename)){
-    case 0:
-        cmd = path + "HTYEdit/HTYEdit";
-        break;
-    case 1:
-        cmd = path + "HTYMP/HTYMP";
-        break;
-    case 2:
-        cmd = path + "HTYScreenshot/HTYScreenshot";
-        break;
-    case 3:
-        cmd = path + "HTYPaint/HTYPaint";
-        break;
-    case 4:
-        cmd = path + "HTYGIFPlayer/HTYGIFPlayer";
-        break;
-    case 5:
-        cmd = path + "HTYDown/HTYDown";
-        break;
-    case 6:
-        cmd = path + "HTYMPAV/HTYMPAV";
-        break;
-    default:
-        filename.truncate(filename.lastIndexOf("."));
-        cmd = filename;
+    QString filepath = index.data(QFileSystemModel::FilePathRole).toString();
+    QString MIME = QMimeDatabase().mimeTypeForFile(filepath).name();
+    if (MIME == "application/x-desktop") {
+        QString sexec = "";
+        QFile file(filepath);
+        file.open(QIODevice::ReadOnly);
+        while(!file.atEnd()){
+            QString sl = file.readLine().replace("\n","");
+            if(sl.left(sl.indexOf("=")).toLower() == "exec"){
+                sexec = sl.mid(sl.indexOf("=")+1);
+                continue;
+            }
+        }
+        qDebug() << "run" << sexec;
+        QProcess *proc = new QProcess;
+        proc->start(sexec);
     }
-    QProcess *proc = new QProcess;
-    proc->start(cmd);
 }
 
 void MainWindow::highlight(QModelIndex index)
@@ -216,10 +200,67 @@ void MainWindow::itemClick(QListWidgetItem* item)
         QProcess *process = new QProcess;
         process->start("dbus-send --print-reply --dest=com.deepin.dde.ControlCenter /com/deepin/dde/ControlCenter com.deepin.dde.ControlCenter.ShowModule \"string:systeminfo\"");
         break;}
-    case 10:
-        ui->listView->setModel(SIM);
+    case 10:        
+        ui->listView->setRootIndex(model->index("/media/sonichy/soft/Linux/HTY"));
         break;
     default:
         break;
+    }
+}
+
+void MainWindow::viewContextMenu(const QPoint &position)
+{
+    QModelIndex index = ui->listView->indexAt(position);
+    QString filepath = index.data(QFileSystemModel::FilePathRole).toString();
+    qDebug() << filepath;
+    QString MIME = QMimeDatabase().mimeTypeForFile(filepath).name();
+    qDebug() << MIME;
+    QList<QAction *> actions;
+    QAction *action_property = new QAction(this);
+    action_property->setText("属性");
+    actions.append(action_property);
+    QAction *result_action = QMenu::exec(actions,ui->listView->mapToGlobal(position));
+    if (result_action == action_property) {
+        QMessageBox MBox(QMessageBox::NoIcon, "属性", "文件名：\t" + QFileInfo(filepath).fileName() + "\n类型：\t" + QMimeDatabase().mimeTypeForFile(filepath).name() + "\n访问时间：\t" + QFileInfo(filepath).lastRead().toString("yyyy-MM-dd hh:mm:ss") + "\n修改时间：\t" + QFileInfo(filepath).lastModified().toString("yyyy-MM-dd hh:mm:ss"));
+        if (MIME=="application/x-desktop") {
+            QString sname = "", sexec = "", spath = "", scomment = "", iconpath = "";
+            QFile file(filepath);
+            file.open(QIODevice::ReadOnly);
+            while(!file.atEnd()){
+                QString sl = file.readLine().replace("\n","");
+                //qDebug() << sl;
+                if(sl.left(sl.indexOf("=")).toLower() == "name") {
+                    sname = sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "exec"){
+                    sexec = sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "icon"){
+                    iconpath = sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "path"){
+                    spath = sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower()=="comment"){
+                    scomment=sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+            }
+            MBox.setText("名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment);
+            MBox.setIconPixmap(QPixmap(iconpath).scaled(100,100,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+        }else
+        if(MIME == "inode/directory") {
+            QFileInfo fileinfo(filepath);
+            QFileIconProvider iconProvider;
+            QIcon icon = iconProvider.icon(fileinfo);
+            MBox.setIconPixmap(icon.pixmap(QSize(128,128)));
+        }else{
+            MBox.setIconPixmap(QPixmap("/usr/share/icons/deepin/mimetypes/128/" + MIME.replace("/","-")+".svg"));
+        }
+        MBox.exec();
     }
 }

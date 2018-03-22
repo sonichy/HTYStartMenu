@@ -5,6 +5,7 @@
 #include <QModelIndex>
 #include <QFileSystemModel>
 #include <QListWidgetItem>
+#include <QStandardItem>
 
 namespace Ui {
 class MainWindow;
@@ -21,6 +22,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QStandardItemModel *SIM;
+    QString path;
 
 private slots:
     void on_pushButtonShutdown_clicked();
@@ -34,6 +37,7 @@ private slots:
     void run(QModelIndex index);
     void highlight(QModelIndex index);
     void itemClick(QListWidgetItem* item);
+    void viewContextMenu(const QPoint &position);
 };
 
 #endif // MAINWINDOW_H
