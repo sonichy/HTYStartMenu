@@ -24,6 +24,9 @@ private:
     Ui::MainWindow *ui;
     QStandardItemModel *SIM;
     QString path;
+    QString readSettings(QString path, QString group, QString key);
+    void writeSettings(QString path, QString group, QString key, QString value);
+    QLineEdit *lineEdit_custompath;
 
 private slots:
     void on_pushButtonShutdown_clicked();
@@ -32,12 +35,14 @@ private slots:
     void suspend();
     void hibernate();
     void lock();
+    void dialogSet();
     void about();
-    void namefilter(QString text);
+    void nameFilter(QString text);
     void run(QModelIndex index);
     void highlight(QModelIndex index);
     void itemClick(QListWidgetItem* item);
     void viewContextMenu(const QPoint &position);
+    void chooseCustomPath();
 };
 
 #endif // MAINWINDOW_H

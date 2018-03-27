@@ -10,13 +10,15 @@
 #include <QMimeDatabase>
 #include <QDateTime>
 #include <QFileIconProvider>
+#include <QSettings>
+#include <QFileDialog>
+#include <QLabel>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    //setStyleSheet("QPushButton::menu-indicator{width:0px;}");
     ui->pushButtonMenu->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     setWindowFlags(Qt::FramelessWindowHint);
     move(0,QApplication::desktop()->height()-height());
@@ -31,13 +33,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listWidget->addItem("阅读");
     ui->listWidget->addItem("编程");
     ui->listWidget->addItem("系统");
-    ui->listWidget->addItem("其他");
+    ui->listWidget->addItem("用户");
+    ui->listWidget->addItem("自定义");
     for(int i=0; i<ui->listWidget->count(); i++){
         ui->listWidget->item(i)->setTextAlignment(Qt::AlignCenter);
     }
     connect(ui->listWidget,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(itemClick(QListWidgetItem*)));
 
-    model=new QFileSystemModel;
+    model = new QFileSystemModel;
     // 设置model监视的目录，其下的修改会立刻signal通知view
     model->setRootPath("/usr/share/applications");
     // 没有通过过滤器的文件，true为不可用，false为隐藏
@@ -48,25 +51,27 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listView->setWordWrap(true);
     // 设置view显示的目录
     ui->listView->setRootIndex(model->index("/usr/share/applications"));
-    connect(ui->lineEditSearch,SIGNAL(textChanged(QString)),this,SLOT(namefilter(QString)));
+    connect(ui->lineEditSearch,SIGNAL(textChanged(QString)),this,SLOT(nameFilter(QString)));
     connect(ui->listView,SIGNAL(clicked(QModelIndex)),this,SLOT(run(QModelIndex)));
     connect(ui->listView,SIGNAL(entered(QModelIndex)),this,SLOT(highlight(QModelIndex)));
     //connect(model,SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>),model,SLOT());
     ui->listView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->listView, SIGNAL(customContextMenuRequested(QPoint)),this, SLOT(viewContextMenu(QPoint)));
 
-    QMenu *shutmenu=new QMenu;
-    QAction *logout=new QAction("注销",this);
-    QAction *reboot=new QAction("重启",this);
-    QAction *suspend=new QAction("待机",this);
-    QAction *hibernate=new QAction("休眠",this);
-    QAction *lock=new QAction("锁定",this);
-    QAction *about=new QAction("关于",this);
+    QMenu *shutmenu = new QMenu;
+    QAction *logout = new QAction("注销",this);
+    QAction *reboot = new QAction("重启",this);
+    QAction *suspend = new QAction("待机",this);
+    QAction *hibernate = new QAction("休眠",this);
+    QAction *lock = new QAction("锁定",this);
+    QAction *set = new QAction("设置",this);
+    QAction *about = new QAction("关于",this);
     shutmenu->addAction(logout);
     shutmenu->addAction(reboot);
     shutmenu->addAction(suspend);
     shutmenu->addAction(hibernate);
     shutmenu->addAction(lock);
+    shutmenu->addAction(set);
     shutmenu->addAction(about);
     ui->pushButtonMenu->setMenu(shutmenu);
     connect(logout,SIGNAL(triggered()),this,SLOT(logout()));
@@ -74,25 +79,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(suspend,SIGNAL(triggered()),this,SLOT(suspend()));
     connect(hibernate,SIGNAL(triggered()),this,SLOT(hibernate()));
     connect(lock,SIGNAL(triggered()),this,SLOT(lock()));
+    connect(set,SIGNAL(triggered()),this,SLOT(dialogSet()));
     connect(about,SIGNAL(triggered()),this,SLOT(about()));
-
-//    path = "/media/sonichy/job/HY/Linux/Qt/";
-//    QStandardItem *SI1,*SI2,*SI3,*SI4,*SI5,*SI6,*SI7;
-//    SI1 = new QStandardItem(QIcon(path+"HTYEdit/icon.png"),"文本编辑器");
-//    SI2 = new QStandardItem(QIcon(path+"HTYMP/icon.png"),"媒体播放器");
-//    SI3 = new QStandardItem(QIcon(path+"HTYScreenshot/icon.png"),"截图");
-//    SI4 = new QStandardItem(QIcon(path+"HTYPaint/icon.png"),"画图");
-//    SI5 = new QStandardItem(QIcon(path+"HTYGIFPlayer/icon.png"),"GIF播放器");
-//    SI6 = new QStandardItem(QIcon(path+"HTYDown/icon.png"),"下载");
-//    SI7 = new QStandardItem(QIcon(path+"HTYMPAV/icon.png"),"媒体播放器QtAV");
-//    SIM = new QStandardItemModel(this);
-//    SIM->appendRow(SI1);
-//    SIM->appendRow(SI2);
-//    SIM->appendRow(SI3);
-//    SIM->appendRow(SI4);
-//    SIM->appendRow(SI5);
-//    SIM->appendRow(SI6);
-//    SIM->appendRow(SI7);
 }
 
 MainWindow::~MainWindow()
@@ -144,7 +132,46 @@ void MainWindow::lock()
     proc->start("qdbus com.deepin.SessionManager /com/deepin/SessionManager com.deepin.SessionManager.RequestLock");
 }
 
-void MainWindow::namefilter(QString text)
+void MainWindow::dialogSet()
+{
+    QDialog *dialog = new QDialog;
+    dialog->setFixedWidth(300);
+    dialog->setWindowTitle("设置");
+    QGridLayout *gridLayout = new QGridLayout;
+    QLabel *label = new QLabel("自定义路径");
+    gridLayout->addWidget(label,0,0,1,1);
+    lineEdit_custompath = new QLineEdit;
+    QString customPath = readSettings(QDir::currentPath() + "/config.ini", "config", "CustomPath");
+    lineEdit_custompath->setText(customPath);
+    lineEdit_custompath->setCursorPosition(0);
+    gridLayout->addWidget(lineEdit_custompath,0,1,1,1);
+    QPushButton *pushButton_path = new QPushButton;
+    pushButton_path->setObjectName("SetDialogCustomPath");
+    pushButton_path->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
+    connect(pushButton_path,SIGNAL(pressed()),this,SLOT(chooseCustomPath()));
+    gridLayout->addWidget(pushButton_path,0,2,1,1);
+    dialog->setLayout(gridLayout);
+    dialog->show();
+}
+
+void MainWindow::chooseCustomPath()
+{
+    QString path = QFileDialog::getExistingDirectory(this, "自定义路径", lineEdit_custompath->text(), QFileDialog::ShowDirsOnly |QFileDialog::DontResolveSymlinks);
+    if(path != ""){
+        lineEdit_custompath->setText(path);
+        lineEdit_custompath->setCursorPosition(0);
+        writeSettings(QDir::currentPath() + "/config.ini", "config", "CustomPath", path);
+    }
+}
+
+void MainWindow::about()
+{
+    QMessageBox aboutMB(QMessageBox::NoIcon, "关于", "海天鹰开始菜单 1.0\n一款基于 Qt 的开始菜单程序。\n作者：黄颖\nE-mail: sonichy@163.com\n主页：https://github.com/sonichy\n\n1.0\n2018-03\n增加：用户路径，一个自定义路径，设置对话框和一个自定义路径设置。修复：非系统路径不可搜索。\n2017-05\n实现注销、锁定。\n2017-04\n实现关机、重启、待机。\n2017-03\n实现搜索\n设计界面");
+    aboutMB.setIconPixmap(QPixmap(":/icon.png"));
+    aboutMB.exec();
+}
+
+void MainWindow::nameFilter(QString text)
 {
     QStringList filter;
     filter << "*" + text + "*";
@@ -180,30 +207,27 @@ void MainWindow::highlight(QModelIndex index)
     model->setData(index, QString("深度"), Qt::DisplayRole);
 }
 
-void MainWindow::about()
-{
-    QMessageBox aboutMB(QMessageBox::NoIcon, "关于", "海天鹰开始菜单 1.0\n一款基于Qt的开始菜单程序。\n作者：黄颖\nE-mail: sonichy@163.com\n主页：sonichy.96.lt\n\n1.0\n2017-05\n实现注销、锁定。\n2017-04\n实现关机、重启、待机。\n2017-03\n实现搜索\n设计界面");
-    aboutMB.setIconPixmap(QPixmap(":/icon.png"));
-    aboutMB.exec();
-}
-
 void MainWindow::itemClick(QListWidgetItem* item)
 {
     Q_UNUSED(item);
     //qDebug() << "row " << ui->listWidget->currentRow();
     switch (ui->listWidget->currentRow()) {
     case 0:
-        ui->listView->setModel(model);
+        model->setRootPath("/usr/share/applications");
         ui->listView->setRootIndex(model->index("/usr/share/applications"));
         break;
     case 9:{
         QProcess *process = new QProcess;
         process->start("dbus-send --print-reply --dest=com.deepin.dde.ControlCenter /com/deepin/dde/ControlCenter com.deepin.dde.ControlCenter.ShowModule \"string:systeminfo\"");
         break;}
-    case 10:        
-        ui->listView->setRootIndex(model->index("/media/sonichy/soft/Linux/HTY"));
+    case 10:
+        model->setRootPath(QDir::homePath() + "/.local/share/applications");
+        ui->listView->setRootIndex(model->index(QDir::homePath() + "/.local/share/applications"));
         break;
-    default:
+    case 11:
+        QString customPath = readSettings(QDir::currentPath() + "/config.ini", "config", "CustomPath");
+        model->setRootPath(customPath);
+        ui->listView->setRootIndex(model->index(customPath));
         break;
     }
 }
@@ -263,4 +287,20 @@ void MainWindow::viewContextMenu(const QPoint &position)
         }
         MBox.exec();
     }
+}
+
+QString MainWindow::readSettings(QString path, QString group, QString key)
+{
+    QSettings setting(path, QSettings::IniFormat);
+    setting.beginGroup(group);
+    QString value = setting.value(key).toString();
+    return value;
+}
+
+void MainWindow::writeSettings(QString path, QString group, QString key, QString value)
+{
+    QSettings *config = new QSettings(path, QSettings::IniFormat);
+    config->beginGroup(group);
+    config->setValue(key, value);
+    config->endGroup();
 }
