@@ -17,15 +17,6 @@
    <iconset resource="file.qrc">
     <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
   </property>
-  <property name="windowOpacity">
-   <double>0.850000000000000</double>
-  </property>
-  <property name="styleSheet">
-   <string notr="true">#pushButtonMenu::menu-indicator{width:0px;}
-#listWidget { background: transparent; text-align:center;  }
-#listWidget::item:!selected:hover { border:1px solid gray; }
-#listWidget::item:selected { background: #127DCF; color: black;}</string>
-  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <property name="spacing">

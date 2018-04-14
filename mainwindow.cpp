@@ -13,15 +13,22 @@
 #include <QSettings>
 #include <QFileDialog>
 #include <QLabel>
+#include <QPainter>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setStyleSheet("#pushButtonMenu::menu-indicator{width:0px;}"
+                  "#listWidget { text-align:center;  }"
+                  "#listWidget::item:!selected:hover { border:1px solid gray; }"
+                  "#listWidget::item:selected { background: #127DCF; color: black;}");
+
     ui->pushButtonMenu->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     setWindowFlags(Qt::FramelessWindowHint);
     move(0,QApplication::desktop()->height()-height());
+    setWindowOpacity(0.8);
 
     ui->listWidget->addItem("全部");
     ui->listWidget->addItem("网络");
@@ -35,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listWidget->addItem("系统");
     ui->listWidget->addItem("用户");
     ui->listWidget->addItem("自定义");
-    for(int i=0; i<ui->listWidget->count(); i++){
+    for (int i=0; i<ui->listWidget->count(); i++) {
         ui->listWidget->item(i)->setTextAlignment(Qt::AlignCenter);
     }
     connect(ui->listWidget,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(itemClick(QListWidgetItem*)));
@@ -246,7 +253,7 @@ void MainWindow::viewContextMenu(const QPoint &position)
     QAction *result_action = QMenu::exec(actions,ui->listView->mapToGlobal(position));
     if (result_action == action_property) {
         QMessageBox MBox(QMessageBox::NoIcon, "属性", "文件名：\t" + QFileInfo(filepath).fileName() + "\n类型：\t" + QMimeDatabase().mimeTypeForFile(filepath).name() + "\n访问时间：\t" + QFileInfo(filepath).lastRead().toString("yyyy-MM-dd hh:mm:ss") + "\n修改时间：\t" + QFileInfo(filepath).lastModified().toString("yyyy-MM-dd hh:mm:ss"));
-        if (MIME=="application/x-desktop") {
+        if (MIME == "application/x-desktop") {
             QString sname = "", sexec = "", spath = "", scomment = "", iconpath = "";
             QFile file(filepath);
             file.open(QIODevice::ReadOnly);
@@ -275,14 +282,21 @@ void MainWindow::viewContextMenu(const QPoint &position)
                 }
             }
             MBox.setText("名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment);
+            qDebug() << "iconpath" << iconpath;
+            if (iconpath == "user-trash") {
+                iconpath = "/usr/share/icons/deepin/places/128/user-trash.svg";
+            }
+            if (!iconpath.contains("/")) {
+                iconpath = "/usr/share/icons/deepin/apps/128/" + iconpath + ".svg";
+                qDebug() << "iconpath" << iconpath;
+            }
             MBox.setIconPixmap(QPixmap(iconpath).scaled(100,100,Qt::KeepAspectRatio,Qt::SmoothTransformation));
-        }else
-        if(MIME == "inode/directory") {
+        } else if (MIME == "inode/directory") {
             QFileInfo fileinfo(filepath);
             QFileIconProvider iconProvider;
             QIcon icon = iconProvider.icon(fileinfo);
             MBox.setIconPixmap(icon.pixmap(QSize(128,128)));
-        }else{
+        } else {
             MBox.setIconPixmap(QPixmap("/usr/share/icons/deepin/mimetypes/128/" + MIME.replace("/","-")+".svg"));
         }
         MBox.exec();
