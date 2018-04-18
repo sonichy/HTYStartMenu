@@ -45,7 +45,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QListWidget" name="listWidget">
+         <widget class="QListWidget" name="listWidget_kind">
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -74,9 +74,24 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QListView" name="listView">
+         <widget class="QListWidget" name="listWidget">
           <property name="mouseTracking">
            <bool>true</bool>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+          <property name="gridSize">
+           <size>
+            <width>100</width>
+            <height>100</height>
+           </size>
+          </property>
+          <property name="viewMode">
+           <enum>QListView::IconMode</enum>
           </property>
          </widget>
         </item>

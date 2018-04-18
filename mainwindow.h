@@ -17,8 +17,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
-    QFileSystemModel *model;
+    ~MainWindow();    
 
 private:
     Ui::MainWindow *ui;
@@ -27,6 +26,11 @@ private:
     QString readSettings(QString path, QString group, QString key);
     void writeSettings(QString path, QString group, QString key, QString value);
     QLineEdit *lineEdit_custompath;
+    QFileInfoList genList(QString spath);
+    QFileInfoList listAll, listApp, listUser, listCustom, listSystem, listMusic, listVideo, listNetwork, listGraphics, listOffice, listProgram, listRead, listChat, listSearch;
+
+protected:
+    virtual void focusOutEvent(QFocusEvent *e);
 
 private slots:
     void on_pushButtonShutdown_clicked();
@@ -37,12 +41,13 @@ private slots:
     void lock();
     void dialogSet();
     void about();
-    void nameFilter(QString text);
+    void search(QString text);
     void run(QModelIndex index);
-    void highlight(QModelIndex index);
-    void itemClick(QListWidgetItem* item);
-    void viewContextMenu(const QPoint &position);
+    void kindClicked(QListWidgetItem *item);
+    void customContextMenu(const QPoint &pos);
     void chooseCustomPath();
+    void setList(QFileInfoList list);
+
 };
 
 #endif // MAINWINDOW_H
