@@ -47,9 +47,14 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     connect(ui->listWidget_kind,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(kindClicked(QListWidgetItem*)));    
 
+    action_emtpy = new QAction(this);
+    action_emtpy->setIcon(QIcon(":/close.svg"));
+    connect(action_emtpy,SIGNAL(triggered(bool)),this,SLOT(emptyLineEditSearch()));
+    ui->lineEditSearch->addAction(action_emtpy,QLineEdit::TrailingPosition);
+    action_emtpy->setVisible(false);
     connect(ui->lineEditSearch,SIGNAL(textChanged(QString)),this,SLOT(search(QString)));
-    connect(ui->listWidget,SIGNAL(clicked(QModelIndex)),this,SLOT(run(QModelIndex)));    
-    ui->listWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(ui->listWidget,SIGNAL(clicked(QModelIndex)),this,SLOT(run(QModelIndex)));
     connect(ui->listWidget, SIGNAL(customContextMenuRequested(QPoint)),this, SLOT(customContextMenu(QPoint)));
 
     QMenu *shutmenu = new QMenu;
@@ -175,6 +180,11 @@ void MainWindow::about()
 
 void MainWindow::search(QString text)
 {
+    if (text=="") {
+        action_emtpy->setVisible(false);
+    } else {
+        action_emtpy->setVisible(true);
+    }
     listSearch.clear();
     for (int i=0; i<listAll.size(); i++) {
         QFileInfo fileInfo = listAll.at(i);
@@ -189,46 +199,7 @@ void MainWindow::run(QModelIndex index)
 {
     Q_UNUSED(index);
     showMinimized();
-    QString filepath;
-    switch (ui->listWidget_kind->currentRow()) {
-    case 0:
-        filepath = listAll.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 1:
-        filepath = listNetwork.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 2:
-        filepath = listChat.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 3:
-        filepath = listMusic.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 4:
-        filepath = listVideo.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 5:
-        filepath = listGraphics.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 6:
-        filepath = listOffice.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 7:
-        filepath = listRead.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 8:
-        filepath = listProgram.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 9:
-        filepath = listSystem.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 10:
-        filepath = listUser.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    case 11:
-        filepath = listCustom.at(ui->listWidget->currentRow()).absoluteFilePath();
-        break;
-    }
-    //filepath = filepath + "/" + index.data(Qt::DisplayRole).toString();
+    QString filepath = listNow.at(ui->listWidget->currentRow()).absoluteFilePath();
     qDebug() << "filepath=" << filepath;
     QString MIME = QMimeDatabase().mimeTypeForFile(filepath).name();
     if (MIME == "application/x-desktop") {
@@ -290,45 +261,7 @@ void MainWindow::customContextMenu(const QPoint &pos)
     if (index.isValid()) {
         QListWidgetItem *LWI = ui->listWidget->itemAt(pos);
         QIcon icon = LWI->icon();
-        QString filepath;
-        switch (ui->listWidget_kind->currentRow()) {
-        case 0:
-            filepath = listAll.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 1:
-            filepath = listNetwork.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 2:
-            filepath = listChat.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 3:
-            filepath = listMusic.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 4:
-            filepath = listVideo.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 5:
-            filepath = listGraphics.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 6:
-            filepath = listOffice.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 7:
-            filepath = listRead.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 8:
-            filepath = listProgram.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 9:
-            filepath = listSystem.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 10:
-            filepath = listUser.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        case 11:
-            filepath = listCustom.at(ui->listWidget->currentRow()).absoluteFilePath();
-            break;
-        }
+        QString filepath = listNow.at(ui->listWidget->currentRow()).absoluteFilePath();
         QString MIME = QMimeDatabase().mimeTypeForFile(filepath).name();
         QList<QAction*> actions;
         QAction *action_property = new QAction(this);
@@ -401,6 +334,7 @@ QFileInfoList MainWindow::genList(QString spath)
 
 void MainWindow::setList(QFileInfoList list)
 {
+    listNow = list;
     ui->listWidget->clear();
     for (int i = 0; i < list.size(); i++) {
         QFileInfo fileInfo = list.at(i);
@@ -437,4 +371,9 @@ void MainWindow::focusOutEvent(QFocusEvent *e)
 {
     Q_UNUSED(e);
     hide();
+}
+
+void MainWindow::emptyLineEditSearch()
+{
+    ui->lineEditSearch->setText("");
 }

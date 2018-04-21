@@ -21,13 +21,14 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QLineEdit *lineEdit_custompath;
+    QAction *action_emtpy;
     QStandardItemModel *SIM;
     QString path;
+    QFileInfoList genList(QString spath);
+    QFileInfoList listAll, listApp, listUser, listCustom, listSystem, listMusic, listVideo, listNetwork, listGraphics, listOffice, listProgram, listRead, listChat, listSearch, listNow;
     QString readSettings(QString path, QString group, QString key);
     void writeSettings(QString path, QString group, QString key, QString value);
-    QLineEdit *lineEdit_custompath;
-    QFileInfoList genList(QString spath);
-    QFileInfoList listAll, listApp, listUser, listCustom, listSystem, listMusic, listVideo, listNetwork, listGraphics, listOffice, listProgram, listRead, listChat, listSearch;
 
 protected:
     virtual void focusOutEvent(QFocusEvent *e);
@@ -47,6 +48,7 @@ private slots:
     void customContextMenu(const QPoint &pos);
     void chooseCustomPath();
     void setList(QFileInfoList list);
+    void emptyLineEditSearch();
 
 };
 
