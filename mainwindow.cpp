@@ -20,10 +20,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setStyleSheet("#pushButtonMenu::menu-indicator{width:0px;}"
+    setStyleSheet("#pushButtonMenu::menu-indicator { width:0px; }"
                   "#listWidget { text-align:center;  }"
                   "#listWidget::item:!selected:hover { border:1px solid gray; }"
-                  "#listWidget::item:selected { background: #127DCF; color: black;}");
+                  "#listWidget::item:selected { background: #87CEFA; color: black;}");
 
     ui->pushButtonMenu->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
     setWindowFlags(Qt::FramelessWindowHint);
@@ -277,7 +277,8 @@ void MainWindow::customContextMenu(const QPoint &pos)
                 QString spath = readSettings(filepath, "Desktop Entry", "Path");
                 QString scomment = readSettings(filepath, "Desktop Entry", "Comment");
                 QString sCategories = readSettings(filepath, "Desktop Entry", "Categories");
-                MBox.setText("名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment+ "\n类别：" + sCategories);
+                QString sMimeType = readSettings(filepath, "Desktop Entry", "MimeType");
+                MBox.setText("名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment+ "\n类别：" + sCategories + "\nMimeType：" + sMimeType);
             }
             MBox.setIconPixmap(icon.pixmap(80,80));
             MBox.exec();
