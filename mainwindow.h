@@ -49,7 +49,7 @@ private slots:
     void chooseCustomPath();
     void setList(QFileInfoList list);
     void emptyLineEditSearch();
-
+    void run();
 };
 
 #endif // MAINWINDOW_H

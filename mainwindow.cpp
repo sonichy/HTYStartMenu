@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEditSearch->addAction(action_emtpy,QLineEdit::TrailingPosition);
     action_emtpy->setVisible(false);
     connect(ui->lineEditSearch,SIGNAL(textChanged(QString)),this,SLOT(search(QString)));
-
+    connect(ui->lineEditSearch,SIGNAL(returnPressed()),this,SLOT(run()));
     connect(ui->listWidget,SIGNAL(clicked(QModelIndex)),this,SLOT(run(QModelIndex)));
     connect(ui->listWidget, SIGNAL(customContextMenuRequested(QPoint)),this, SLOT(customContextMenu(QPoint)));
 
@@ -377,4 +377,10 @@ void MainWindow::focusOutEvent(QFocusEvent *e)
 void MainWindow::emptyLineEditSearch()
 {
     ui->lineEditSearch->setText("");
+}
+
+void MainWindow::run()
+{
+    QProcess *proc = new QProcess;
+    proc->start(ui->lineEditSearch->text());
 }
