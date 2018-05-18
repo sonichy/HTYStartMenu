@@ -58,6 +58,18 @@
         </item>
         <item>
          <widget class="QLineEdit" name="lineEditSearch">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>40</height>
+           </size>
+          </property>
           <property name="focusPolicy">
            <enum>Qt::StrongFocus</enum>
           </property>
@@ -129,21 +141,24 @@
             </property>
             <property name="minimumSize">
              <size>
-              <width>0</width>
-              <height>0</height>
+              <width>30</width>
+              <height>30</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>70</width>
-              <height>16777215</height>
+              <width>30</width>
+              <height>30</height>
              </size>
             </property>
             <property name="focusPolicy">
              <enum>Qt::NoFocus</enum>
             </property>
             <property name="text">
-             <string>关机</string>
+             <string/>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -157,14 +172,14 @@
             </property>
             <property name="minimumSize">
              <size>
-              <width>0</width>
-              <height>0</height>
+              <width>30</width>
+              <height>30</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>20</width>
-              <height>16777215</height>
+              <width>30</width>
+              <height>30</height>
              </size>
             </property>
             <property name="font">
@@ -178,6 +193,9 @@
             </property>
             <property name="text">
              <string/>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

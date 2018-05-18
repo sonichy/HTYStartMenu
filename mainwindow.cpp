@@ -20,15 +20,23 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setStyleSheet("#pushButtonMenu::menu-indicator { width:0px; }"
-                  "#listWidget { text-align:center;  }"
-                  "#listWidget::item:!selected:hover { border:1px solid gray; }"
-                  "#listWidget::item:selected { background: #87CEFA; color: black;}");
-
-    ui->pushButtonMenu->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+    setStyleSheet("background-color: rgba(100, 100, 100, 150);");
+    ui->lineEditSearch->setStyleSheet("color:white; border:1px solid gray;");
+    ui->listWidget->setStyleSheet("QListWidget::Item { color:white; }"
+                                  "QListWidget::Item:selected { background:#333333; border-radius:10px; }"
+                                  "QListWidget::item:!selected:hover { background:#333333; border-radius:10px;}");
+    ui->listWidget_kind->setStyleSheet("QListWidget::Item {color:white;}"
+                                       "QListWidget::Item:selected { background:#333333; color:#6BC7FE;}");
+    ui->pushButtonShutdown->setStyleSheet("QPushButton { border-image:url(:/shutdown.svg); background:transparent; }"
+                                          "QPushButton::hover { border-image:url(:/shutdown_hover.svg) }"
+                                          "QPushButton::focus { border-image:url(:/shutdown_hover.svg) }");
+    ui->pushButtonMenu->setStyleSheet("QPushButton::menu-indicator { width:0px; }"
+                                      "QPushButton { border-image:url(:/menu.svg); background:transparent; }"
+                                      "QPushButton::hover { border-image:url(:/menu_hover.svg) }"
+                                      "QPushButton::focus { border-image:url(:/menu_hover.svg) }");
     setWindowFlags(Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_TranslucentBackground, true);
     move(0,QApplication::desktop()->height()-height());
-    //setWindowOpacity(0.8);
 
     ui->listWidget_kind->addItem("全部");
     ui->listWidget_kind->addItem("网络");
@@ -383,4 +391,12 @@ void MainWindow::run()
 {
     QProcess *proc = new QProcess;
     proc->start(ui->lineEditSearch->text());
+}
+
+void MainWindow::paintEvent(QPaintEvent *e)
+{
+    Q_UNUSED(e);
+    QPainter painter(this);
+    //painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+    painter.fillRect(rect(), QColor(0, 0, 0, 100));
 }

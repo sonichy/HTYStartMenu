@@ -29,6 +29,7 @@ private:
     QFileInfoList listAll, listApp, listUser, listCustom, listSystem, listMusic, listVideo, listNetwork, listGraphics, listOffice, listProgram, listRead, listChat, listSearch, listNow;
     QString readSettings(QString path, QString group, QString key);
     void writeSettings(QString path, QString group, QString key, QString value);
+    void paintEvent(QPaintEvent *e);
 
 protected:
     virtual void focusOutEvent(QFocusEvent *e);
