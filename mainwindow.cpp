@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i=0; i<ui->listWidget_kind->count(); i++) {
         ui->listWidget_kind->item(i)->setTextAlignment(Qt::AlignCenter);
     }
-    connect(ui->listWidget_kind,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(kindClicked(QListWidgetItem*)));    
+    connect(ui->listWidget_kind,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(kindClicked(QListWidgetItem*)));
 
     action_emtpy = new QAction(this);
     action_emtpy->setIcon(QIcon(":/close.svg"));
@@ -105,14 +105,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButtonShutdown_clicked()
 {
-    showMinimized();    
+    showMinimized();
     QProcess *proc = new QProcess;
-    proc->start("systemctl poweroff");
+    //proc->start("systemctl poweroff");
+    proc->start("qdbus com.deepin.SessionManager /com/deepin/SessionManager com.deepin.SessionManager.RequestShutdown");
 }
 
 void MainWindow::logout()
 {
-    showMinimized();    
+    showMinimized();
     QProcess *proc = new QProcess;
     proc->start("qdbus com.deepin.SessionManager /com/deepin/SessionManager com.deepin.SessionManager.RequestLogout");
     //proc->start("systemctl restart lightdm");
@@ -120,28 +121,30 @@ void MainWindow::logout()
 
 void MainWindow::reboot()
 {
-    showMinimized();    
+    showMinimized();
     QProcess *proc = new QProcess;
-    proc->start("systemctl reboot");
+    //proc->start("systemctl reboot");
+    proc->start("qdbus com.deepin.SessionManager /com/deepin/SessionManager com.deepin.SessionManager.RequestReboot");
 }
 
 void MainWindow::suspend()
 {
-    showMinimized();    
+    showMinimized();
     QProcess *proc = new QProcess;
-    proc->start("systemctl suspend");
+    //proc->start("systemctl suspend");
+    proc->start("qdbus com.deepin.SessionManager /com/deepin/SessionManager com.deepin.SessionManager.RequestSuspend");
 }
 
 void MainWindow::hibernate()
 {
     showMinimized();
-    QProcess *proc = new QProcess;
-    proc->start("systemctl hibernate");
+    //QProcess *proc = new QProcess;
+    //proc->start("systemctl hibernate");
 }
 
 void MainWindow::lock()
 {
-    showMinimized();    
+    showMinimized();
     QProcess *proc = new QProcess;
     //proc->start("systemctl lock");
     proc->start("qdbus com.deepin.SessionManager /com/deepin/SessionManager com.deepin.SessionManager.RequestLock");
@@ -361,6 +364,7 @@ void MainWindow::setList(QFileInfoList list)
             }else{
                 icon = QIcon::fromTheme(sicon);
             }
+            scomment = readSettings(fileInfo.absoluteFilePath(), "Desktop Entry", "Comment");
         } else if (MIME == "inode/directory") {
             QFileIconProvider iconProvider;
             icon = iconProvider.icon(fileInfo);
@@ -371,6 +375,7 @@ void MainWindow::setList(QFileInfoList list)
         LWI = new QListWidgetItem(icon,sname);
         //LWI = new QListWidgetItem(icon,fileInfo.fileName());
         LWI->setSizeHint(QSize(100,100));
+        LWI->setToolTip(scomment);
         ui->listWidget->insertItem(i, LWI);
     }
     ui->listWidget->scrollToTop();
