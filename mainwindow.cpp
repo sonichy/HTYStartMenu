@@ -57,13 +57,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     action_emtpy = new QAction(this);
     action_emtpy->setIcon(QIcon(":/close.svg"));
-    connect(action_emtpy,SIGNAL(triggered(bool)),this,SLOT(emptyLineEditSearch()));
-    ui->lineEditSearch->addAction(action_emtpy,QLineEdit::TrailingPosition);
+    connect(action_emtpy, SIGNAL(triggered(bool)), this, SLOT(emptyLineEditSearch()));
+    ui->lineEditSearch->addAction(action_emtpy, QLineEdit::TrailingPosition);
     action_emtpy->setVisible(false);
-    connect(ui->lineEditSearch,SIGNAL(textChanged(QString)),this,SLOT(search(QString)));
-    connect(ui->lineEditSearch,SIGNAL(returnPressed()),this,SLOT(run()));
-    connect(ui->listWidget,SIGNAL(clicked(QModelIndex)),this,SLOT(run(QModelIndex)));
-    connect(ui->listWidget, SIGNAL(customContextMenuRequested(QPoint)),this, SLOT(customContextMenu(QPoint)));
+    connect(ui->lineEditSearch, SIGNAL(textChanged(QString)), this, SLOT(search(QString)));
+    connect(ui->lineEditSearch, SIGNAL(returnPressed()), this, SLOT(run()));
+    connect(ui->listWidget, SIGNAL(clicked(QModelIndex)), this, SLOT(run(QModelIndex)));
+    connect(ui->listWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(customContextMenu(QPoint)));
 
     QMenu *shutmenu = new QMenu;
     QAction *logout = new QAction("注销",this);
@@ -81,13 +81,13 @@ MainWindow::MainWindow(QWidget *parent) :
     shutmenu->addAction(set);
     shutmenu->addAction(about);
     ui->pushButtonMenu->setMenu(shutmenu);
-    connect(logout,SIGNAL(triggered()),this,SLOT(logout()));
-    connect(reboot,SIGNAL(triggered()),this,SLOT(reboot()));
-    connect(suspend,SIGNAL(triggered()),this,SLOT(suspend()));
-    connect(hibernate,SIGNAL(triggered()),this,SLOT(hibernate()));
-    connect(lock,SIGNAL(triggered()),this,SLOT(lock()));
-    connect(set,SIGNAL(triggered()),this,SLOT(dialogSet()));
-    connect(about,SIGNAL(triggered()),this,SLOT(about()));
+    connect(logout, SIGNAL(triggered()), this, SLOT(logout()));
+    connect(reboot, SIGNAL(triggered()), this, SLOT(reboot()));
+    connect(suspend, SIGNAL(triggered()), this, SLOT(suspend()));
+    connect(hibernate, SIGNAL(triggered()), this, SLOT(hibernate()));
+    connect(lock, SIGNAL(triggered()), this, SLOT(lock()));
+    connect(set, SIGNAL(triggered()), this, SLOT(dialogSet()));
+    connect(about, SIGNAL(triggered()), this, SLOT(about()));
 
     listApp = genList("/usr/share/applications");
     listUser = genList(QDir::homePath() + "/.local/share/applications");
@@ -166,7 +166,7 @@ void MainWindow::dialogSet()
     QPushButton *pushButton_path = new QPushButton;
     pushButton_path->setObjectName("SetDialogCustomPath");
     pushButton_path->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
-    connect(pushButton_path,SIGNAL(pressed()),this,SLOT(chooseCustomPath()));
+    connect(pushButton_path, SIGNAL(pressed()), this, SLOT(chooseCustomPath()));
     gridLayout->addWidget(pushButton_path,0,2,1,1);
     dialog->setLayout(gridLayout);
     dialog->show();
@@ -184,23 +184,23 @@ void MainWindow::chooseCustomPath()
 
 void MainWindow::about()
 {
-    QMessageBox aboutMB(QMessageBox::NoIcon, "关于", "海天鹰开始菜单 2.0\n一款基于 Qt 的 Linux 开始菜单程序。\n作者：黄颖\nE-mail: sonichy@163.com\n主页：https://github.com/sonichy\n\n2.0 2018-04\n用 QListWidget + QFileInfoList 重写，实现显示图标、分类。\n\n1.0 2017-03\nQListView + QFileSystemModel 生成列表，无法显示 desktop 图标，无法分类。");
+    QMessageBox aboutMB(QMessageBox::NoIcon, "关于", "海天鹰开始菜单 3.0\n一款基于 Qt 的 Linux 开始菜单程序。\n作者：黄颖\nE-mail: sonichy@163.com\n主页：https://github.com/sonichy\n\n3.0 2019-06\n使用QList(QMap)保存数据。\n\n2.0 2018-04\n用 QListWidget + QFileInfoList 重写，实现显示图标、分类。\n\n1.0 2017-03\nQListView + QFileSystemModel 生成列表，无法显示 desktop 图标，无法分类。");
     aboutMB.setIconPixmap(QPixmap(":/icon.png"));
     aboutMB.exec();
 }
 
 void MainWindow::search(QString text)
 {
-    if (text=="") {
+    if (text == "") {
         action_emtpy->setVisible(false);
     } else {
         action_emtpy->setVisible(true);
     }
     listSearch.clear();
     for (int i=0; i<listAll.size(); i++) {
-        QFileInfo fileInfo = listAll.at(i);
-        if (fileInfo.fileName().contains(text,Qt::CaseInsensitive)) {
-            listSearch.append(fileInfo);
+        QMap<QString, QString> map = listAll.at(i);
+        if (map.value("name").contains(text, Qt::CaseInsensitive) || map.value("exec").contains(text, Qt::CaseInsensitive)) {
+            listSearch.append(map);
         }
     }
     setList(listSearch);
@@ -210,15 +210,11 @@ void MainWindow::run(QModelIndex index)
 {
     Q_UNUSED(index);
     showMinimized();
-    QString filepath = listNow.at(ui->listWidget->currentRow()).absoluteFilePath();
-    qDebug() << "filepath=" << filepath;
-    QString MIME = QMimeDatabase().mimeTypeForFile(filepath).name();
+    QMap<QString, QString> map = listNow.at(ui->listWidget->currentRow());
+    QString MIME = QMimeDatabase().mimeTypeForFile(QFileInfo(map.value("filepath"))).name();
     if (MIME == "application/x-desktop") {
-        QString sexec = readSettings(filepath, "Desktop Entry", "Exec");
-        qDebug() << "run" << sexec;
-        QProcess *proc = new QProcess;
-        proc->setWorkingDirectory(readSettings(filepath, "Desktop Entry", "Path"));
-        proc->start(sexec);
+        QProcess *process = new QProcess;
+        process->start(map.value("exec"));
     }
 }
 
@@ -272,8 +268,9 @@ void MainWindow::customContextMenu(const QPoint &pos)
     if (index.isValid()) {
         QListWidgetItem *LWI = ui->listWidget->itemAt(pos);
         QIcon icon = LWI->icon();
-        QString filepath = listNow.at(ui->listWidget->currentRow()).absoluteFilePath();
-        QString MIME = QMimeDatabase().mimeTypeForFile(filepath).name();
+        QMap<QString, QString> map = listNow.at(ui->listWidget->currentRow());
+        QString filepath = map.value("filepath");
+        QString MIME = QMimeDatabase().mimeTypeForFile(QFileInfo(filepath)).name();
         QList<QAction*> actions;
         QAction *action_property = new QAction(this);
         action_property->setText("属性");
@@ -282,12 +279,11 @@ void MainWindow::customContextMenu(const QPoint &pos)
         if (result_action == action_property) {
             QMessageBox MBox(QMessageBox::NoIcon, "属性", "文件名：\t" + QFileInfo(filepath).fileName() + "\n类型：\t" + QMimeDatabase().mimeTypeForFile(filepath).name() + "\n访问时间：\t" + QFileInfo(filepath).lastRead().toString("yyyy-MM-dd hh:mm:ss") + "\n修改时间：\t" + QFileInfo(filepath).lastModified().toString("yyyy-MM-dd hh:mm:ss"));
             if (MIME == "application/x-desktop") {
-                QString sexec = readSettings(filepath, "Desktop Entry", "Exec");
-                QString sname = readSettings(filepath, "Desktop Entry", "Name");
-                //QString sicon = readSettings(filepath, "Desktop Entry", "Icon");
-                QString spath = readSettings(filepath, "Desktop Entry", "Path");
-                QString scomment = readSettings(filepath, "Desktop Entry", "Comment");
-                QString sCategories = readSettings(filepath, "Desktop Entry", "Categories");
+                QString sexec = map.value("exec");
+                QString sname = map.value("name");
+                QString spath = map.value("path");
+                QString scomment = LWI->toolTip();
+                QString sCategories = map.value("categories");
                 QString sMimeType = readSettings(filepath, "Desktop Entry", "MimeType");
                 MBox.setText("名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment+ "\n类别：" + sCategories + "\nMimeType：" + sMimeType);
             }
@@ -315,67 +311,107 @@ void MainWindow::writeSettings(QString path, QString group, QString key, QString
     settings->endGroup();
 }
 
-QFileInfoList MainWindow::genList(QString spath)
+QList<QMap<QString, QString>> MainWindow::genList(QString spath)
 {
-    qDebug() << "genList" << spath;
-    QFileInfoList list;
-    if (spath != "") {
-        // 读取文件夹下所有文件 https://www.cnblogs.com/findumars/p/6006129.html
-        QDir dir(spath);
-        dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-        //dir.setSorting(QDir::Size | QDir::Reversed);
-        list = dir.entryInfoList();   // 一句话文件信息转QList
-        for (int i = 0; i < list.size(); i++) {
-            QFileInfo fileInfo = list.at(i);
-            QString MIME = QMimeDatabase().mimeTypeForFile(fileInfo.absoluteFilePath()).name();
-            if (MIME == "application/x-desktop") {
-                QString sCategories = readSettings(fileInfo.absoluteFilePath(), "Desktop Entry", "Categories");
-                if (sCategories.contains("Music")) listMusic.append(fileInfo);
-                if (sCategories.contains("System")) listSystem.append(fileInfo);
-                if (sCategories.contains("Video")) listVideo.append(fileInfo);
-                if (sCategories.contains("Office")) listOffice.append(fileInfo);
-                if (sCategories.contains("Network")) listNetwork.append(fileInfo);
-                if (sCategories.contains("Program") || sCategories.contains("Development") || sCategories.contains("GTK")) listProgram.append(fileInfo);
-                if (sCategories.contains("Graphics")) listGraphics.append(fileInfo);
-                if (sCategories.contains("chat")) listChat.append(fileInfo);
+    QList<QMap<QString, QString>> list;
+    // 读取文件夹下所有文件 https://www.cnblogs.com/findumars/p/6006129.html
+    QDir dir(spath);
+    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+    //dir.setSorting(QDir::Size | QDir::Reversed);
+    QFileInfoList fileInfoList = dir.entryInfoList();   // 一句话文件信息转QList
+    for (int i = 0; i < fileInfoList.size(); i++) {
+        QFileInfo fileInfo = fileInfoList.at(i);
+        QString MIME = QMimeDatabase().mimeTypeForFile(fileInfo.absoluteFilePath()).name();
+        if (MIME == "application/x-desktop") {
+            QString sname = "", spath1 = "", sexec = "",  sicon = "", scomment = "", scategories = "", sMimeType = "";
+            QFile file(fileInfo.absoluteFilePath());
+            file.open(QIODevice::ReadOnly);
+            while(!file.atEnd()){
+                QString sl = file.readLine().replace("\n","");
+                //qDebug() << sl;
+                if(sl.left(sl.indexOf("=")).toLower() == "name") {
+                    sname = sl.mid(sl.indexOf("=") + 1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "path"){
+                    spath1 = sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "exec"){
+                    sexec = sl.mid(sl.indexOf("=") + 1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "icon"){
+                    sicon = sl.mid(sl.indexOf("=")+1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "comment"){
+                    scomment = sl.mid(sl.indexOf("=") + 1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")).toLower() == "categories"){
+                    scategories = sl.mid(sl.indexOf("=") + 1);
+                    continue;
+                }
+                if(sl.left(sl.indexOf("=")) == "MimeType"){
+                    sMimeType = sl.mid(sl.indexOf("=") + 1);
+                    continue;
+                }
             }
+
+            QMap<QString,QString> map;
+            map.insert("filepath",fileInfo.absoluteFilePath());
+            map.insert("name", sname);
+            map.insert("path", spath1);
+            map.insert("exec", sexec);
+            map.insert("icon", sicon);
+            map.insert("comment", scomment);
+            map.insert("categories", scategories);
+            map.insert("MimeType", sMimeType);
+            list.append(map);
+
+            if (scategories.contains("Music")) listMusic.append(map);
+            if (scategories.contains("System")) listSystem.append(map);
+            if (scategories.contains("Video")) listVideo.append(map);
+            if (scategories.contains("Office")) listOffice.append(map);
+            if (scategories.contains("Network")) listNetwork.append(map);
+            if (scategories.contains("Program") || scategories.contains("Development") || scategories.contains("GTK")) listProgram.append(map);
+            if (scategories.contains("Graphics")) listGraphics.append(map);
+            if (scategories.contains("Chat")) listChat.append(map);
         }
     }
     return list;
 }
 
-void MainWindow::setList(QFileInfoList list)
+void MainWindow::setList(QList<QMap<QString, QString>> list)
 {
     listNow = list;
     ui->listWidget->clear();
     for (int i = 0; i < list.size(); i++) {
-        QFileInfo fileInfo = list.at(i);
-        QString sname = "", sexec = "", spath = "", scomment = "", sicon = "";
+        QMap<QString, QString> map = list.at(i);
         QIcon icon;
-        QString MIME = QMimeDatabase().mimeTypeForFile(fileInfo.absoluteFilePath()).name();
-        //QString filetype = MIME.left(MIME.indexOf("/"));
-        sname = fileInfo.fileName();
+        QString MIME = QMimeDatabase().mimeTypeForFile(map.value("filepath")).name();
         if (MIME == "application/x-desktop") {
-            //sexec = readSettings(fileInfo.absoluteFilePath(), "Desktop Entry", "Exec");
-            sname = readSettings(fileInfo.absoluteFilePath(), "Desktop Entry", "Name");
-            sicon = readSettings(fileInfo.absoluteFilePath(), "Desktop Entry", "Icon");
+            QString sicon = map.value("icon");
             if (sicon.contains("/")) {
                 icon = QIcon(sicon);
             }else{
                 icon = QIcon::fromTheme(sicon);
             }
-            scomment = readSettings(fileInfo.absoluteFilePath(), "Desktop Entry", "Comment");
-        } else if (MIME == "inode/directory") {
-            QFileIconProvider iconProvider;
-            icon = iconProvider.icon(fileInfo);
+//        }
+//        else if (MIME == "inode/directory") {
+//            QFileIconProvider iconProvider;
+//            icon = iconProvider.icon(fileInfo);
         } else {
-            icon = QIcon("/usr/share/icons/deepin/mimetypes/128/" + MIME.replace("/","-") + ".svg");
+            //icon = QIcon("/usr/share/icons/deepin/mimetypes/128/" + MIME.replace("/","-") + ".svg");
+            icon = QIcon::fromTheme(MIME.replace("/","-"));
         }
         QListWidgetItem *LWI;
-        LWI = new QListWidgetItem(icon,sname);
-        //LWI = new QListWidgetItem(icon,fileInfo.fileName());
+        LWI = new QListWidgetItem(icon, map.value("name"));
         LWI->setSizeHint(QSize(100,100));
-        LWI->setToolTip(scomment);
+        LWI->setToolTip(map.value("comment"));
+        LWI->setData(DESKTOP_PATH, map.value("path"));
+        LWI->setData(DESKTOP_EXEC, map.value("exec"));
         ui->listWidget->insertItem(i, LWI);
     }
     ui->listWidget->scrollToTop();

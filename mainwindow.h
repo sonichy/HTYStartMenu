@@ -1,6 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#define DESKTOP_PATH Qt::UserRole + 1
+#define DESKTOP_EXEC Qt::UserRole + 2
+
 #include <QMainWindow>
 #include <QModelIndex>
 #include <QFileSystemModel>
@@ -17,7 +20,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();    
+    ~MainWindow();
 
 private:
     Ui::MainWindow *ui;
@@ -25,8 +28,8 @@ private:
     QAction *action_emtpy;
     QStandardItemModel *SIM;
     QString path;
-    QFileInfoList genList(QString spath);
-    QFileInfoList listAll, listApp, listUser, listCustom, listSystem, listMusic, listVideo, listNetwork, listGraphics, listOffice, listProgram, listRead, listChat, listSearch, listNow;
+    QList<QMap<QString,QString>> listAll, listUser, listCustom, listApp, listSystem, listMusic, listVideo, listNetwork, listGraphics, listOffice, listProgram, listRead, listChat, listSearch, listNow;
+    QList<QMap<QString,QString>> genList(QString spath);
     QString readSettings(QString path, QString group, QString key);
     void writeSettings(QString path, QString group, QString key, QString value);
     void paintEvent(QPaintEvent *e);
@@ -48,7 +51,7 @@ private slots:
     void kindClicked(QListWidgetItem *item);
     void customContextMenu(const QPoint &pos);
     void chooseCustomPath();
-    void setList(QFileInfoList list);
+    void setList(QList<QMap<QString, QString> > list);
     void emptyLineEditSearch();
     void run();
 };
