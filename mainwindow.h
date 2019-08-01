@@ -1,8 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#define DESKTOP_PATH Qt::UserRole + 1
-#define DESKTOP_EXEC Qt::UserRole + 2
+//#define DESKTOP_PATH Qt::UserRole + 1
+//#define DESKTOP_EXEC Qt::UserRole + 2
 
 #include <QMainWindow>
 #include <QModelIndex>

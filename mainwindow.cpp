@@ -9,7 +9,6 @@
 #include <QProcess>
 #include <QMimeDatabase>
 #include <QDateTime>
-#include <QFileIconProvider>
 #include <QSettings>
 #include <QFileDialog>
 #include <QLabel>
@@ -20,11 +19,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setStyleSheet("background-color: rgba(100, 100, 100, 150);");
+    setStyleSheet("QWidget { background-color: rgba(100, 100, 100, 150); }"
+                  "QToolTip { color:white; background-color:rgba(50, 50, 50); }");
     ui->lineEditSearch->setStyleSheet("color:white; border:1px solid gray;");
     ui->listWidget->setStyleSheet("QListWidget::Item { color:white; }"
                                   "QListWidget::Item:selected { background:#333333; border-radius:10px; }"
-                                  "QListWidget::item:!selected:hover { background:#333333; border-radius:10px;}");
+                                  "QListWidget::item:!selected:hover { background:#333333; border-radius:10px; }");
     ui->listWidget_kind->setStyleSheet("QListWidget::Item {color:white;}"
                                        "QListWidget::Item:selected { background:#333333; color:#6BC7FE;}");
     ui->pushButtonShutdown->setStyleSheet("QPushButton { border-image:url(:/shutdown.svg); background:transparent; }"
@@ -273,7 +273,7 @@ void MainWindow::customContextMenu(const QPoint &pos)
         QString MIME = QMimeDatabase().mimeTypeForFile(QFileInfo(filepath)).name();
         QList<QAction*> actions;
         QAction *action_property = new QAction(this);
-        action_property->setText("属性");
+        action_property->setText("属性(&R)");
         actions.append(action_property);
         QAction *result_action = QMenu::exec(actions,ui->listWidget->mapToGlobal(pos));
         if (result_action == action_property) {
@@ -282,12 +282,12 @@ void MainWindow::customContextMenu(const QPoint &pos)
                 QString sexec = map.value("exec");
                 QString sname = map.value("name");
                 QString spath = map.value("path");
-                QString scomment = LWI->toolTip();
+                QString scomment = map.value("comment");;
                 QString sCategories = map.value("categories");
-                QString sMimeType = readSettings(filepath, "Desktop Entry", "MimeType");
-                MBox.setText("名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment+ "\n类别：" + sCategories + "\nMimeType：" + sMimeType);
+                QString sMimeType = map.value("MimeType");
+                MBox.setText("Desktop：" + filepath + "\n名称：" + sname + "\n运行：" + sexec + "\n路径：" + spath + "\n说明：" +scomment+ "\n类别：" + sCategories + "\nMimeType：" + sMimeType);
             }
-            MBox.setIconPixmap(icon.pixmap(80,80));
+            MBox.setIconPixmap(icon.pixmap(100,100));
             MBox.exec();
         }
     }
@@ -329,38 +329,38 @@ QList<QMap<QString, QString>> MainWindow::genList(QString spath)
             while(!file.atEnd()){
                 QString sl = file.readLine().replace("\n","");
                 //qDebug() << sl;
-                if(sl.left(sl.indexOf("=")).toLower() == "name") {
-                    sname = sl.mid(sl.indexOf("=") + 1);
+                if(sl.left(sl.indexOf("=")).toLower().trimmed() == "name") {
+                    sname = sl.mid(sl.indexOf("=") + 1).trimmed();
                     continue;
                 }
-                if(sl.left(sl.indexOf("=")).toLower() == "path"){
-                    spath1 = sl.mid(sl.indexOf("=")+1);
+                if(sl.left(sl.indexOf("=")).toLower().trimmed() == "path"){
+                    spath1 = sl.mid(sl.indexOf("=")+1).trimmed();
                     continue;
                 }
-                if(sl.left(sl.indexOf("=")).toLower() == "exec"){
-                    sexec = sl.mid(sl.indexOf("=") + 1);
+                if(sl.left(sl.indexOf("=")).toLower().trimmed() == "exec"){
+                    sexec = sl.mid(sl.indexOf("=") + 1).trimmed();
                     continue;
                 }
-                if(sl.left(sl.indexOf("=")).toLower() == "icon"){
-                    sicon = sl.mid(sl.indexOf("=")+1);
+                if(sl.left(sl.indexOf("=")).toLower().trimmed() == "icon"){
+                    sicon = sl.mid(sl.indexOf("=")+1).trimmed();
                     continue;
                 }
-                if(sl.left(sl.indexOf("=")).toLower() == "comment"){
-                    scomment = sl.mid(sl.indexOf("=") + 1);
+                if(sl.left(sl.indexOf("=")).toLower().trimmed() == "comment"){
+                    scomment = sl.mid(sl.indexOf("=") + 1).trimmed();
                     continue;
                 }
-                if(sl.left(sl.indexOf("=")).toLower() == "categories"){
-                    scategories = sl.mid(sl.indexOf("=") + 1);
+                if(sl.left(sl.indexOf("=")).toLower().trimmed() == "categories"){
+                    scategories = sl.mid(sl.indexOf("=") + 1).trimmed();
                     continue;
                 }
-                if(sl.left(sl.indexOf("=")) == "MimeType"){
-                    sMimeType = sl.mid(sl.indexOf("=") + 1);
+                if(sl.left(sl.indexOf("=")).trimmed() == "MimeType"){
+                    sMimeType = sl.mid(sl.indexOf("=") + 1).trimmed();
                     continue;
                 }
             }
 
             QMap<QString,QString> map;
-            map.insert("filepath",fileInfo.absoluteFilePath());
+            map.insert("filepath", fileInfo.absoluteFilePath());
             map.insert("name", sname);
             map.insert("path", spath1);
             map.insert("exec", sexec);
@@ -393,25 +393,27 @@ void MainWindow::setList(QList<QMap<QString, QString>> list)
         QString MIME = QMimeDatabase().mimeTypeForFile(map.value("filepath")).name();
         if (MIME == "application/x-desktop") {
             QString sicon = map.value("icon");
-            if (sicon.contains("/")) {
-                icon = QIcon(sicon);
+            if(sicon == ""){
+                sicon = "applications-system-symbolic";
             }else{
-                icon = QIcon::fromTheme(sicon);
+                if (sicon.contains("/")) {
+                    icon = QIcon(sicon);
+                }else{
+                    icon = QIcon::fromTheme(sicon);
+                }
             }
 //        }
 //        else if (MIME == "inode/directory") {
-//            QFileIconProvider iconProvider;
-//            icon = iconProvider.icon(fileInfo);
+//            icon = QIcon::fromTheme("folder");
         } else {
-            //icon = QIcon("/usr/share/icons/deepin/mimetypes/128/" + MIME.replace("/","-") + ".svg");
-            icon = QIcon::fromTheme(MIME.replace("/","-"));
+            icon = QIcon::fromTheme(MIME.replace("/", "-"));
         }
         QListWidgetItem *LWI;
+        if(icon.isNull()) icon = QIcon::fromTheme("applications-system-symbolic");
         LWI = new QListWidgetItem(icon, map.value("name"));
-        LWI->setSizeHint(QSize(100,100));
+        LWI->setSizeHint(QSize(100, 100));
         LWI->setToolTip(map.value("comment"));
-        LWI->setData(DESKTOP_PATH, map.value("path"));
-        LWI->setData(DESKTOP_EXEC, map.value("exec"));
+
         ui->listWidget->insertItem(i, LWI);
     }
     ui->listWidget->scrollToTop();
@@ -439,5 +441,5 @@ void MainWindow::paintEvent(QPaintEvent *e)
     Q_UNUSED(e);
     QPainter painter(this);
     //painter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
-    painter.fillRect(rect(), QColor(0, 0, 0, 100));
+    painter.fillRect(rect(), QColor(0, 0, 0, 150));
 }
